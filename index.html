@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="vi" class="dark">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Card Data Manager & Grouping Tool</title>
+    <title>Card Manager Tool</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -12,1112 +12,370 @@
             theme: {
                 extend: {
                     colors: {
-                        brand: {
-                            50: '#f0f9ff',
-                            100: '#e0f2fe',
-                            500: '#0ea5e9',
-                            600: '#0284c7',
-                            700: '#0369a1',
-                        }
+                        brand: { 50: '#eef2ff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' }
                     }
                 }
             }
         }
     </script>
-    <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.1);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(156, 163, 175, 0.5);
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-        <!-- Input Area Collapsible / Controls -->
-        <section class="bg-gray-800 rounded-2xl p-4 sm:p-6 border border-gray-700 shadow-xl space-y-4">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                <label for="raw-input" class="text-sm font-semibold text-gray-200 flex items-center gap-2">
-                    <i class="fa-solid fa-code text-blue-400"></i> Dữ liệu thẻ đầu vào:
-                </label>
-                <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                    <button id="btn-load-default" class="flex-1 sm:flex-none px-3.5 py-1.5 text-xs font-medium bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 rounded-lg transition-all flex items-center justify-center gap-1.5">
-                        <i class="fa-solid fa-file-import"></i> Khôi phục dữ liệu mẫu (success.txt)
-                    </button>
-                    <button id="btn-clear" class="px-3.5 py-1.5 text-xs font-medium bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/40 rounded-lg transition-all flex items-center justify-center gap-1.5">
-                        <i class="fa-solid fa-trash-can"></i> Xóa tất cả
-                    </button>
-                </div>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans selection:bg-indigo-500 selection:text-white">
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 bg-slate-800/50 p-6 rounded-2xl border border-slate-700/60 backdrop-blur-md">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">
+                    💳 Card Manager Pro
+                </h1>
+                <p class="text-slate-400 text-sm mt-1">Hệ thống quản lý, lọc, gom nhóm và xử lý thẻ thông minh</p>
             </div>
-
-            <!-- Upload File Dropzone & Textarea Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <!-- Dropzone Upload Area -->
-                <div id="drop-zone" class="md:col-span-1 border-2 border-dashed border-gray-600 hover:border-blue-500 bg-gray-900/50 hover:bg-blue-500/5 rounded-xl p-4 flex flex-col justify-center items-center text-center cursor-pointer transition-all group">
-                    <input type="file" id="file-input" accept=".txt" class="hidden">
-                    <div class="p-3 bg-blue-500/10 text-blue-400 rounded-full mb-2 group-hover:scale-110 transition-transform">
-                        <i class="fa-solid fa-cloud-arrow-up text-2xl"></i>
-                    </div>
-                    <p class="text-xs font-semibold text-gray-200 mb-1">Tải lên file dữ liệu (.txt)</p>
-                    <p class="text-[11px] text-gray-400">Kéo thả file .txt vào đây hoặc <span class="text-blue-400 underline">duyệt file</span></p>
-                    <span id="file-name" class="mt-2 text-[11px] text-emerald-400 font-mono hidden truncate max-w-full"></span>
-                </div>
-
-                <!-- Textarea Area -->
-                <div class="md:col-span-2">
-                    <textarea id="raw-input" rows="4" class="w-full h-full min-h-[110px] bg-gray-900/90 border border-gray-700 rounded-xl p-3 text-xs font-mono text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-y" placeholder="Hoặc dán trực tiếp danh sách thẻ tại đây (Định dạng: card_number|expiration|cvc|holder_name|country|brand|funding|segment_type)..."></textarea>
-                </div>
+            <div class="flex items-center gap-3">
+                <span id="total-count-badge" class="px-3 py-1.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-xl text-sm font-medium">
+                    Tổng số thẻ: 0
+                </span>
             </div>
+        </header>
 
-            <!-- Notice Banner for Expired & Duplicate Cards -->
-            <div id="filter-summary-banner" class="hidden p-3 bg-blue-900/30 border border-blue-500/40 rounded-xl text-xs flex flex-wrap items-center justify-between gap-2">
-                <div class="flex items-center space-x-2 text-blue-300">
-                    <i class="fa-solid fa-circle-info text-sm"></i>
-                    <span>Thống kê lọc dữ liệu tự động:</span>
-                </div>
-                <div class="flex flex-wrap items-center gap-2 font-medium">
-                    <span class="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded" id="stat-valid">Hợp lệ: 0</span>
-                    <span class="px-2 py-0.5 bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded" id="stat-expired">Đã loại hết hạn: 0</span>
-                    <span class="px-2 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded" id="stat-duplicate">Đã loại trùng lặp: 0</span>
-                </div>
-            </div>
-
-            <div class="flex justify-between items-center pt-1">
-                <div class="flex items-center space-x-2">
-                    <span class="text-xs text-gray-400 font-medium">Chế độ gom nhóm (Group By):</span>
-                    <select id="group-by" class="bg-gray-900 border border-gray-700 rounded-lg px-2.5 py-1 text-xs text-blue-400 font-semibold focus:ring-2 focus:ring-blue-500 outline-none">
-                        <option value="country">Quốc gia (Country)</option>
-                        <option value="funding">Loại thẻ (Funding)</option>
-                        <option value="segmentType">Phân khúc (Segment)</option>
-                        <option value="brand">Thương hiệu (Brand)</option>
-                    </select>
-                </div>
-
-                <button id="btn-render" class="px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-arrows-rotate"></i> Lọc & Phân Tích Lại
-                </button>
-            </div>
-        </section>
-
-        <!-- Filter Stats Banner (Báo cáo loại bỏ thẻ) -->
-        <section id="filter-summary-banner" class="hidden bg-gray-800/90 border rounded-2xl p-4 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div class="flex items-center space-x-3">
-                <div class="p-2.5 bg-amber-500/20 text-amber-400 rounded-xl border border-amber-500/30 flex-shrink-0">
-                    <i class="fa-solid fa-triangle-exclamation text-xl"></i>
-                </div>
-                <div class="text-xs sm:text-sm">
-                    <h3 class="font-bold text-gray-200">Kết quả lọc tự động ban đầu</h3>
-                    <p id="summary-text" class="text-gray-400 mt-0.5"></p>
-                </div>
-            </div>
-            <div class="flex items-center gap-2 text-xs font-mono self-end sm:self-auto">
-                <span class="bg-rose-900/40 text-rose-300 border border-rose-700/50 px-2.5 py-1 rounded-lg" id="badge-expired">0 Hết hạn</span>
-                <span class="bg-purple-900/40 text-purple-300 border border-purple-700/50 px-2.5 py-1 rounded-lg" id="badge-duplicate">0 Trùng lặp</span>
-            </div>
-        </section>
-
-        <!-- Control Bar: Group By & Search -->
-        <section class="bg-gray-800 rounded-2xl p-4 sm:p-5 border border-gray-700 shadow-lg space-y-4">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                
-                <!-- Group By Option -->
+        <!-- Stats & Notifications Banner -->
+        <div id="stats-banner" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div class="bg-slate-800/80 border border-slate-700/80 p-4 rounded-xl flex items-center gap-4">
+                <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-lg text-xl">✅</div>
                 <div>
-                    <label class="block text-xs font-semibold text-blue-400 mb-1">
-                        <i class="fa-solid fa-layer-group"></i> Gom nhóm theo (Group By)
-                    </label>
-                    <select id="group-by-select" class="w-full bg-gray-900 border border-blue-500/50 rounded-lg px-3 py-2 text-xs font-medium text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none">
-                        <option value="country" selected>Quốc gia (Country) [Mặc định]</option>
-                        <option value="funding">Loại thẻ (Funding)</option>
-                        <option value="segmentType">Phân khúc (Segment Type)</option>
-                        <option value="brand">Thương hiệu (Brand)</option>
-                    </select>
-                </div>
-
-                <!-- Search Input -->
-                <div>
-                    <label class="block text-xs font-medium text-gray-400 mb-1">
-                        <i class="fa-solid fa-magnifying-glass"></i> Tìm theo Số Thẻ
-                    </label>
-                    <div class="relative">
-                        <input type="text" id="search-card" placeholder="Nhập số thẻ..." class="w-full bg-gray-900 border border-gray-700 rounded-lg pl-9 pr-3 py-2 text-xs text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
-                        <i class="fa-solid fa-credit-card absolute left-3 top-2.5 text-gray-500 text-xs"></i>
-                    </div>
-                </div>
-
-                <!-- Sort Order within Groups -->
-                <div>
-                    <label class="block text-xs font-medium text-gray-400 mb-1">
-                        <i class="fa-solid fa-arrow-down-a-z"></i> Sắp xếp trong nhóm
-                    </label>
-                    <select id="sort-in-group" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
-                        <option value="card-asc">Số thẻ (Tăng dần)</option>
-                        <option value="exp-asc">Hạn sử dụng (Gần -> Xa)</option>
-                    </select>
-                </div>
-
-                <!-- Expand/Collapse All & Bulk Action -->
-                <div class="flex items-end gap-2">
-                    <button id="btn-toggle-all" class="flex-1 py-2 px-3 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1">
-                        <i class="fa-solid fa-angles-up" id="toggle-all-icon"></i> <span id="toggle-all-text">Thu gọn tất cả</span>
-                    </button>
-                    <button id="btn-copy-all-visible" class="py-2 px-3 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5" title="Copy tất cả thẻ đang lọc">
-                        <i class="fa-regular fa-copy"></i> Copy tất cả
-                    </button>
+                    <div class="text-slate-400 text-xs">Thẻ hợp lệ sử dụng</div>
+                    <div id="stat-valid" class="text-xl font-bold text-emerald-400">0</div>
                 </div>
             </div>
-        </section>
-
-        <!-- Grouped Cards Accordion Container -->
-        <section id="groups-container" class="space-y-4">
-            <!-- Dynamic Groups will be inserted here -->
-        </section>
-
-        <!-- Empty State Message -->
-        <div id="empty-state" class="hidden text-center py-12 bg-gray-800/40 rounded-2xl border border-dashed border-gray-700">
-            <i class="fa-solid fa-credit-card-slash text-4xl text-gray-600 mb-3"></i>
-            <p class="text-gray-400 font-medium text-sm">Không tìm thấy thẻ nào phù hợp!</p>
+            <div class="bg-slate-800/80 border border-slate-700/80 p-4 rounded-xl flex items-center gap-4">
+                <div class="p-3 bg-amber-500/10 text-amber-400 rounded-lg text-xl">⏳</div>
+                <div>
+                    <div class="text-slate-400 text-xs">Đã loại bỏ (Hết hạn)</div>
+                    <div id="stat-expired" class="text-xl font-bold text-amber-400">0</div>
+                </div>
+            </div>
+            <div class="bg-slate-800/80 border border-slate-700/80 p-4 rounded-xl flex items-center gap-4">
+                <div class="p-3 bg-rose-500/10 text-rose-400 rounded-lg text-xl">🔄</div>
+                <div>
+                    <div class="text-slate-400 text-xs">Đã loại bỏ (Trùng lặp)</div>
+                    <div id="stat-duplicate" class="text-xl font-bold text-rose-400">0</div>
+                </div>
+            </div>
         </div>
-    </main>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-5 right-5 transform translate-y-20 opacity-0 transition-all duration-300 bg-emerald-600 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2 z-50 pointer-events-none">
-        <i class="fa-solid fa-circle-check text-lg"></i>
-        <span id="toast-message" class="text-sm font-semibold">Đã copy vào bộ nhớ tạm!</span>
+        <!-- Controls Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-8">
+            <!-- Upload & Input Area -->
+            <div class="lg:col-span-5 bg-slate-800/60 border border-slate-700/60 p-5 rounded-2xl flex flex-col justify-between">
+                <div>
+                    <label class="block text-sm font-semibold mb-2 text-slate-300">📁 Tải lên file .txt hoặc dán dữ liệu</label>
+                    <div id="drop-zone" class="border-2 border-dashed border-slate-600 hover:border-indigo-500 rounded-xl p-4 text-center cursor-pointer transition bg-slate-900/40 relative">
+                        <input type="file" id="file-input" accept=".txt" class="absolute inset-0 opacity-0 cursor-pointer">
+                        <div class="text-slate-400 text-sm">
+                            <span class="text-indigo-400 font-semibold">Chọn file txt</span> hoặc kéo thả file vào đây
+                        </div>
+                        <div id="file-name" class="text-xs text-emerald-400 mt-1 font-mono"></div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <textarea id="raw-input" rows="3" placeholder="Hoặc dán danh sách thẻ tại đây (card_number|expiration|cvc|...)..." class="w-full bg-slate-900/60 border border-slate-700 rounded-xl p-3 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 font-mono"></textarea>
+                    <button id="process-btn" class="mt-2 w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-sm transition shadow-lg shadow-indigo-600/20">
+                        Xử lý & Lọc dữ liệu
+                    </button>
+                </div>
+            </div>
+
+            <!-- Search, Group & Filter Tools -->
+            <div class="lg:col-span-7 bg-slate-800/60 border border-slate-700/60 p-5 rounded-2xl flex flex-col justify-between gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Search -->
+                    <div>
+                        <label class="block text-sm font-semibold mb-2 text-slate-300">🔍 Tìm kiếm số thẻ</label>
+                        <input type="text" id="search-input" placeholder="Nhập 4-6 số đầu hoặc đầy đủ..." class="w-full bg-slate-900/60 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <!-- Group By -->
+                    <div>
+                        <label class="block text-sm font-semibold mb-2 text-slate-300">📂 Gom nhóm theo</label>
+                        <select id="group-select" class="w-full bg-slate-900/60 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
+                            <option value="country" selected>Quốc gia (Country)</option>
+                            <option value="funding">Loại thẻ (Funding)</option>
+                            <option value="segment_type">Phân khúc (Segment Type)</option>
+                            <option value="brand">Thương hiệu (Brand)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-700/60">
+                    <div class="flex items-center gap-2">
+                        <button id="expand-all-btn" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-xs rounded-lg transition text-slate-200 font-medium">Mở tất cả nhóm</button>
+                        <button id="collapse-all-btn" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-xs rounded-lg transition text-slate-200 font-medium">Đóng tất cả nhóm</button>
+                    </div>
+                    <div id="filter-status" class="text-xs text-indigo-400 font-medium">Đang sắp xếp cố định theo Country</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Display Container -->
+        <main id="groups-container" class="space-y-4">
+            <!-- Dynamic Groups will be injected here -->
+        </main>
     </div>
 
-    <!-- Hidden Copy Field -->
-    <textarea id="hidden-copy-area" class="sr-only" aria-hidden="true"></textarea>
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-800 text-slate-100 border border-slate-700 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 transform translate-y-24 opacity-0 transition-all duration-300 z-50">
+        <span id="toast-icon" class="text-emerald-400">✨</span>
+        <span id="toast-msg" class="text-sm font-medium">Đã copy thành công!</span>
+    </div>
 
-    <!-- JavaScript Implementation -->
+    <!-- JavaScript Logic -->
     <script>
-        // Initial Sample Data (Dữ liệu từ success.txt)
-        const DEFAULT_DATA = `5256920055823974|01/33|169|Marcelo Razeto|AR|MASTERCARD|CREDIT|CONSUMER
+        let allCards = [];
+
+        // Dữ liệu mẫu ban đầu để kiểm tra giao diện chạy trực tiếp
+        const defaultRawData = `5256920055823974|01/33|169|Marcelo Razeto|AR|MASTERCARD|CREDIT|CONSUMER
 4517616456832121|01/31|322|Marcelo Razeto|AR|VISA|DEBIT|CONSUMER
 5256920034704709|01/30|631|MARCELO RAZETO|AR|MASTERCARD|CREDIT|CONSUMER
 4258210006514604|09/26|544|MARCELO RAZETO|AR|VISA|CREDIT|CONSUMER
-4517722903937156|08/30|321|VAZZANO HUGO SANTO|AR|VISA|DEBIT|CONSUMER
-5547300198251889|04/32|327|Ramiro Alejandro Chavez|AR|MASTERCARD|DEBIT|CONSUMER
-5547300860413452|02/33|941||AR|MASTERCARD|DEBIT|CONSUMER
-4054971022997117|06/29|671|Tony Sondergeld|AU|VISA|DEBIT|CONSUMER
-5217293014538770|09/28|032||AU|MASTERCARD|CREDIT|CONSUMER
-4622391098776902|04/30|611|seth rea|AU|VISA|DEBIT|CONSUMER
-4998710003998853|10/28|024||BO|VISA|DEBIT|CONSUMER
-5149454331223842|11/32|771|Gildete Nunes de Oliveira|BR|MASTERCARD|CREDIT|CONSUMER
-5307803327587768|07/27|223|osvaldo bacagini|BR|MASTERCARD|CREDIT|CONSUMER
-5280522792304266|12/32|251||BR|MASTERCARD|CREDIT|CONSUMER
-4497740008888946|04/34|831||BR|VISA|CREDIT|CONSUMER
-4985810077121179|09/30|252|ruann karllos de oliveira lima|BR|VISA|CREDIT|CONSUMER
-5502096274463439|09/33|639|AMABILI VOLTOLINI|BR|MASTERCARD|CREDIT|CONSUMER
-5502095595873219|04/33|366|KATIUSCA S ZANELLA|BR|MASTERCARD|CREDIT|CONSUMER
-5502097385277395|03/33|412|Maria de jesus|BR|MASTERCARD|CREDIT|CONSUMER
-5502096854788908|12/31|572|kinggamer FF|BR|MASTERCARD|CREDIT|CONSUMER
-5350160528917898|10/28|667|kinggamer FF|BR|MASTERCARD|CREDIT|CONSUMER
-5322213293480819|07/27|683||BR|MASTERCARD|CREDIT|COMMERCIAL
-4854641000509091|11/29|006|Pablo g c s|BR|VISA|CREDIT|CONSUMER
-2238350068756385|09/34|755|Pablo g c s|BR|MASTERCARD|CREDIT|CONSUMER
-5899162668776686|11/32|497|JOAO MARCOS COSTA MORAIS|US|MASTERCARD|DEBIT|CONSUMER
-5526400563541099|05/34|318|THIAGO O CALADO|BR|MASTERCARD|CREDIT|COMMERCIAL
-5581202807483266|12/32|713|Leonardo Scortegagn|BR|MASTERCARD|CREDIT|CONSUMER
-2238359303566251|08/34|194||BR|MASTERCARD|CREDIT|CONSUMER
-4540514000072743|06/29|906|jack brown|CA|VISA|DEBIT|CONSUMER
-4540514000111871|07/30|130|jack brown|CA|VISA|DEBIT|CONSUMER
-4519912219369172|07/29|685|sreenath janardhan|CA|VISA|DEBIT|CONSUMER
-4506440185117214|08/30|414|Donna Hanson|CA|INTERAC|DEBIT|
-5491399255866890|05/29|797|Donna Hanson|CA|MASTERCARD|CREDIT|CONSUMER
 4031630690309470|01/29|610|4031630690309470|US|VISA|PREPAID|CONSUMER
-4574310283088855|06/30|183|4031630690309470|US|VISA|DEBIT|CONSUMER
-5457569042038415|04/27|874|dimitrios roumeliotis|CA|MASTERCARD|CREDIT|CONSUMER
-4415650031706008|03/30|066|kimberly  reveco|CL|VISA|CREDIT|CONSUMER
-4345591238529428|10/28|607||CL|VISA|DEBIT|CONSUMER
-5108695388184217|09/30|263|Mercado pago|CL|MASTERCARD|DEBIT|CONSUMER
-4757746004021064|10/32|866|francisco moraga|CL|VISA|DEBIT|CONSUMER
-5558256911227158|01/32|226|John Fredy Andrade Aguirre|CO|MASTERCARD|CREDIT|CONSUMER
-4367371684924560|08/30|434|Nico Clinoo|AR|VISA|CREDIT|CONSUMER
-4242424242424242|06/36|123|Nico Clinoo|GB|VISA|CREDIT|CONSUMER
-5379861007356287|10/27|596|Gabriel Álvarez|US|MASTERCARD|CREDIT|CONSUMER
 4342562513432292|12/28|055||US|VISA|DEBIT|CONSUMER
-374759766121007|11/27|3814||BR|AMERICAN_EXPRESS|CREDIT|CONSUMER
-5168441080464475|02/29|950||CZ|MASTERCARD|CREDIT|CONSUMER
-5424021500270650|12/30|222|Gabriel Nikolas Remo|AT|MASTERCARD|PREPAID|CONSUMER
-5168720615666435|03/27|463|Dominik Vavra|CZ|MASTERCARD|CREDIT|CONSUMER
-5374280481190259|12/28|801|Charleen Michelle Kühn|DE|MASTERCARD|DEBIT|CONSUMER
-5357140208110900|11/28|174||AT|MASTERCARD|DEBIT|COMMERCIAL
-5222050171907625|12/32|162||ES|MASTERCARD|DEBIT|CONSUMER
-375685092455000|11/27|2882||ES|AMERICAN_EXPRESS|CREDIT|CONSUMER
-4343570001927417|10/28|327|ALFREDO GIRALDO LOPEZ|ES|VISA|CREDIT|CONSUMER
-4343570001941095|09/29|534||ES|VISA|CREDIT|CONSUMER
-5222050166140646|05/31|058||ES|MASTERCARD|DEBIT|CONSUMER
-4599858293992749|12/26|717|ARNOL HERNAN MUÑOZ HERRERA|ES|VISA|DEBIT|CONSUMER
-4176410335265204|08/30|271|jose antonio leal sanchez|ES|VISA|CREDIT|CONSUMER
-5351207744033015|03/33|374|DAILOS LEON DIAZ|ES|MASTERCARD|DEBIT|CONSUMER
-5222050172381754|01/33|933|SANTIAGO ANGEL KAMARA AGYEI|ES|MASTERCARD|DEBIT|CONSUMER
-5365125328051001|10/26|829||ES|MASTERCARD|PREPAID|COMMERCIAL
-4990430101397811|10/26|421|BOURGEOIS Léo|FR|VISA|DEBIT|CONSUMER
-4973557067612139|12/27|232|lucas parrot|FR|VISA|DEBIT|CONSUMER
-5131621285928986|05/29|763|robert raggi|FR|MASTERCARD|DEBIT|CONSUMER
-4970407558569906|12/29|686|fosse isabelle|FR|VISA|DEBIT|CONSUMER
-4972039771047143|04/28|938|JIKH ELYAS|FR|VISA|DEBIT|CONSUMER
-5354562826478109|09/31|949|JIKH ELYAS|AT|MASTERCARD|DEBIT|CONSUMER
-4165981731776286|06/30|409||AT|VISA|DEBIT|CONSUMER
-4978860594050608|05/29|876||FR|VISA|DEBIT|CONSUMER
-4165981646846943|12/29|517|AMIR OSM|AT|VISA|DEBIT|CONSUMER
-4165981784218525|06/31|054|kahmir|AT|VISA|DEBIT|CONSUMER
-5309283732832604|05/30|595|Sophie Mayes|GB|MASTERCARD|CREDIT|CONSUMER
-5356740101758233|07/27|380||GB|MASTERCARD|DEBIT|CONSUMER
-5356668114288288|06/31|129|Louis Perryman|GB|MASTERCARD|DEBIT|CONSUMER
-4659438742809419|12/29|740|A L Cassidy|GB|VISA|DEBIT|CONSUMER
-5189480217969795|03/29|278|banadar alsadiwi|FR|MASTERCARD|DEBIT|CONSUMER
-4567254264458555|08/29|670|abdulmuneem yaaqob|GB|VISA|CREDIT|COMMERCIAL
-4165981792369609|05/31|378||AT|VISA|DEBIT|CONSUMER
-4751390437453309|09/29|723|M R BARRY|GB|VISA|DEBIT|CONSUMER
-4921817786206867|05/27|722|Jessica Clarke|GB|VISA|DEBIT|CONSUMER
-5356740105743231|05/27|260|S MOHAMED|GB|MASTERCARD|DEBIT|CONSUMER
-4921818581351437|10/29|064|Leo J Betts|GB|VISA|DEBIT|CONSUMER
-5356743462700208|02/35|553|Ashleigh Showell|GB|MASTERCARD|DEBIT|CONSUMER
-5356668058839138|06/30|436|Ollie Savage|GB|MASTERCARD|DEBIT|CONSUMER
-4462387191234230|07/27|678|Rudie D Bruce|GB|VISA|DEBIT|CONSUMER
-5355222022792816|11/30|080|Reuben Bean|GB|MASTERCARD|DEBIT|CONSUMER
-5355221486801550|06/29|152|Shariif Mahamed|GB|MASTERCARD|DEBIT|CONSUMER
-4302524006347138|03/29|376||GR|VISA|PREPAID|CONSUMER
-4355840117507188|06/28|254||IN|VISA|DEBIT|CONSUMER
-5354564918595964|06/30|795|Paolo Della Costa|AT|MASTERCARD|DEBIT|CONSUMER
-5397680026457811|05/30|813|Simone Catalin Perciante|IT|MASTERCARD|DEBIT|CONSUMER
-5397680026184621|02/31|230|Simone Catalin Perciante|IT|MASTERCARD|DEBIT|CONSUMER
-4165984963270820|07/28|315|Lorenzo Fodaro|AT|VISA|DEBIT|CONSUMER
-5333171209796651|07/29|035|antonio fodaro|IT|MASTERCARD|PREPAID|CONSUMER
-5398320129500006|06/27|940|Paolo Del Popolo|IT|MASTERCARD|CREDIT|CONSUMER
-377782479426502|04/29|9160|SANEYORI SHIMBO|JP|AMERICAN_EXPRESS|CREDIT|CONSUMER
-5217584400021433|09/33|295|ZHE ZHU|CN|MASTERCARD|DEBIT|CONSUMER
-5124420483074001|02/30|762|ZHE ZHU|AT|MASTERCARD|DEBIT|CONSUMER
-3568867979759248|06/30|390|ZHU ZHE|CN|JCB|CREDIT|
-5355026500129122|10/29|732|ZHE ZHU|BG|MASTERCARD|DEBIT|CONSUMER
-5378323674010094|06/30|843|ZHE ZHU|CN|MASTERCARD|CREDIT|CONSUMER
-4382140080000635|05/30|250|ZHE ZHU|SG|VISA|CREDIT|CONSUMER
-4514617513262008|06/30|270|ZHE ZHU|CN|VISA|CREDIT|CONSUMER
-3563780000566968|12/30|381|ZHU ZHE|CN|JCB|CREDIT|
-5482780006052396|03/31|152|朱喆|CN|MASTERCARD|CREDIT|CONSUMER
-4780600217295372|02/31|840|NANO|CN|VISA|CREDIT|CONSUMER
-4549240635936885|12/30|273|ZHE ZHU|CO|VISA|CREDIT|CONSUMER
-4019240126412314|06/29|864||JP|VISA|PREPAID|CONSUMER
-4332870097242769|03/30|650|YUUTO HARASHIMA|JP|VISA|PREPAID|CONSUMER
-4049460061219011|07/26|566||JP|VISA|PREPAID|CONSUMER
-4089051039370415|06/31|883||VN|VISA|DEBIT|CONSUMER
-4589090135440180|11/29|685|Beatris de Anda Ramirez|MX|VISA|CREDIT|CONSUMER
-5579087021227589|10/31|295||MX|MASTERCARD|CREDIT|CONSUMER
-4217470103971723|08/29|787|gian olvera|MX|VISA|DEBIT|CONSUMER
-4815163236345438|02/28|301|MARTHA LORENA GONZALEZ VILLA|MX|VISA|DEBIT|CONSUMER
-4815163274932535|06/28|796|GERARDO FRANCISCO BARRIENTOS P|MX|VISA|DEBIT|CONSUMER
-5579100371953231|12/27|546|CARLOS ADAN RAMON PAREDES|MX|MASTERCARD|CREDIT|CONSUMER
-4557881367404375|05/29|223||PE|VISA|DEBIT|CONSUMER
-5399050000699770|06/30|156||PE|MASTERCARD|PREPAID|CONSUMER
-4213550187399497|12/29|323|MARCO FERNANDEZ|PE|VISA|DEBIT|CONSUMER
-4634021279435889|01/50|897|walter nuñez|PE|VISA|CREDIT|CONSUMER
-4557881400262376|05/29|535||PE|VISA|DEBIT|CONSUMER
-4474097394798156|09/27|551||PE|VISA|CREDIT|CONSUMER
-4551708301902881|06/26|222||PE|VISA|DEBIT|CONSUMER
-4147918467695713|04/31|319|joshep nahui|PE|VISA|CREDIT|CONSUMER
-4547760073772064|04/31|422|JOSHEP NAHU|PE|VISA|DEBIT|SMALL_BUSINESS
-4557881469783965|04/30|535||PE|VISA|DEBIT|CONSUMER
-36100501842898|12/28|081|FREDY YOUNG|PE|PULSE|CREDIT|
-377753004690672|04/29|192|segundo villalba|PE|AMERICAN_EXPRESS|CREDIT|CONSUMER
-4557881450728730|05/29|720||PE|VISA|DEBIT|CONSUMER
-4557881485386447|08/30|850|carmen rebeca pareja galvez|PE|VISA|DEBIT|CONSUMER
-4551038467911363|04/31|1363|charles|PE|VISA|DEBIT|CONSUMER
-67643728732468432|02/34|784|michał lupa|IT|MASTERCARD|DEBIT|CONSUMER
-5545931007171363|07/28|978||RO|MASTERCARD|DEBIT|CONSUMER
-4322611009604643|09/29|708|Jovan Milosevic|RS|VISA|DEBIT|CONSUMER
-4106210003897386|06/26|919|eastern shiel|SA|VISA|DEBIT|SMALL_BUSINESS
-5294155139826057|08/27|936|mostafa elkady|SA|MASTERCARD|DEBIT|CONSUMER
-5200580988559207|09/26|029|EASTERN SHIELD|SA|MASTERCARD|DEBIT|COMMERCIAL
-5297410305128797|09/26|239|mohammed a abdulkarim|SA|MASTERCARD|DEBIT|CONSUMER
-4548871344296194|06/30|258|jaber a.alqarni|SA|VISA|CREDIT|COMMERCIAL
-4539033004413913|12/29|583|jan nowak|SE|VISA|DEBIT|CONSUMER
-5374610455178882|04/28|627|Ronny sandström|SE|MASTERCARD|DEBIT|CONSUMER
-5230450306811074|01/29|409||SV|MASTERCARD|CREDIT|CONSUMER
-4390930042858868|06/28|563|XAVIER VELASCO|SV|VISA|DEBIT|CONSUMER
-6500521305594274|02/30|988|süha inci|TR|PULSE|DEBIT|
-5428040111784723|03/31|275|musa inci|TR|MASTERCARD|CREDIT|CONSUMER
-6501617040386551|10/29|441|Arda Deniz|TR|PULSE|CREDIT|
-5449370700882280|03/35|035||AE|MASTERCARD|CREDIT|CONSUMER
-5282080017741497|06/31|226|Nuri Paslı|TR|MASTERCARD|DEBIT|CONSUMER
-4097581461246212|02/33|260||US|VISA|PREPAID|CONSUMER
-5456600538723664|01/35|633|gage freitag|US|MASTERCARD|PREPAID|CONSUMER
-5301332310926458|02/30|441|gage freitag|US|MASTERCARD|CREDIT|CONSUMER
-5545428877312326|07/30|598|jack brzeski|NZ|MASTERCARD|PREPAID|CONSUMER
-4284551444872627|01/27|147|j j brzeski|NZ|VISA|DEBIT|CONSUMER
-5143772496169476|11/31|783|JOSHUA MICHAEL COLE|US|MASTERCARD|CREDIT|CONSUMER
-4544810289354372|07/29|699|joshua cole|US|VISA|PREPAID|CONSUMER
-4031630361653461|05/30|233|Braylen Napier|US|VISA|PREPAID|CONSUMER
-4899977839634289|04/28|040|grover apaza|BO|VISA|DEBIT|CONSUMER
-4899972883650638|04/28|040|GROVER APAZA MAMANI|BO|VISA|DEBIT|CONSUMER
-4295441969982794|02/32|594||US|VISA|DEBIT|CONSUMER
-4295442652462821|07/30|995||US|VISA|DEBIT|CONSUMER
-5343480614808672|03/31|892||US|MASTERCARD|CREDIT|CONSUMER
-5456601401444115|03/36|829|Gavynn|US|MASTERCARD|PREPAID|CONSUMER
-5502699900460362|06/28|321||HK|MASTERCARD|CREDIT|COMMERCIAL
-4031630526462329|10/30|867|Heather collins|US|VISA|PREPAID|CONSUMER
-4403935274373911|06/28|619|felicia riddle|US|VISA|PREPAID|CONSUMER
-4828210026097052|12/29|024|Heather Collins|US|VISA|CREDIT|CONSUMER
-4470090010767592|08/27|136|Heather Dawn Collins|US|VISA|DEBIT|CONSUMER
-4008950081200099|01/30|247|Felicia mangan|US|VISA|DEBIT|CONSUMER
-5220940226962397|09/29|906|Andrew|US|MASTERCARD|PREPAID|CONSUMER
-4118104700424030|04/35|659|visa|US|VISA|PREPAID|CONSUMER
-5424181169441354|09/29|758||US|MASTERCARD|CREDIT|CONSUMER
-4031630778010552|07/29|716|Jeremiah Crouch|US|VISA|PREPAID|CONSUMER
-4031631761492872|04/31|523||US|VISA|PREPAID|CONSUMER
-4403935418460194|03/28|481|CHRISTIAN DEIGHAN|US|VISA|PREPAID|CONSUMER
-4358809043730724|03/28|710|CHRISTIAN DEIGHAN|US|VISA|PREPAID|CONSUMER
-4757748016632722|07/28|359|HECTOR ORELLANA P.|CL|VISA|DEBIT|CONSUMER
-4295442973387210|12/32|496|jrrr|US|VISA|DEBIT|CONSUMER
-4232231150420233|04/29|706||US|VISA|DEBIT|CONSUMER
-4031631741107129|08/30|491|Adrian Delacruz|US|VISA|PREPAID|CONSUMER
-5502097941969923|04/34|066|miguel paulino de oliveira|BR|MASTERCARD|CREDIT|CONSUMER
-4473440001864709|06/28|805|Colby Stewart|US|VISA|DEBIT|CONSUMER
-4342582038005134|03/30|310|Jordan W Gardner|US|VISA|DEBIT|CONSUMER
-5597581837913364|04/30|127|Danielle E Loomis|US|MASTERCARD|DEBIT|CONSUMER
-5240133572493227|10/30|653||AE|MASTERCARD|CREDIT|COMMERCIAL
-4118104659641485|05/34|714|Phillip Snyder|US|VISA|PREPAID|CONSUMER
-4295444314363058|07/30|382|phillip snyder|US|VISA|DEBIT|CONSUMER
-4482330233983527|07/30|985|JORGE EMMANUEL ORTIZ VARGAS|US|VISA|DEBIT|CONSUMER
-4833166875690632|08/29|888||US|VISA|DEBIT|CONSUMER
-4638460020763411|08/30|341||US|VISA|DEBIT|CONSUMER
-4358806227844560|11/33|513|Jaydon zermeno|US|VISA|PREPAID|CONSUMER
-5366700015279906|10/31|343|ezequiel lopez|UY|MASTERCARD|DEBIT|CONSUMER
-5429910274461716|02/26|713|Martin Herrera|UY|MASTERCARD|CREDIT|CONSUMER
-4551751062867034|04/29|579|Martin Herrera|UY|VISA|CREDIT|CONSUMER
-4929640443284610|06/30|229|Agustín Diano|UY|VISA|CREDIT|CONSUMER
-2231371018274300|10/29|441||UY|MASTERCARD|DEBIT|CONSUMER
-5899415592752862|08/17|056|Jaime Alberto Pineda Abreu|US|MASTERCARD|DEBIT|CONSUMER
-4345591415349079|10/31|552||CL|VISA|DEBIT|CONSUMER
-4406982031231542|02/29|007||CL|VISA|DEBIT|CONSUMER`;
+374759766121007|11/27|3814||BR|AMERICAN_EXPRESS|CREDIT|CONSUMER`;
 
-        // Data State
-        let validCards = [];
-        let expiredCount = 0;
-        let duplicateCount = 0;
-        let isAllExpanded = true;
-
-        // DOM Elements
-        const rawInput = document.getElementById('raw-input');
-        const fileInput = document.getElementById('file-input');
-        const dropZone = document.getElementById('drop-zone');
-        const fileNameDisplay = document.getElementById('file-name');
-        const btnRender = document.getElementById('btn-render');
-        const btnLoadDefault = document.getElementById('btn-load-default');
-        const btnClear = document.getElementById('btn-clear');
-        const groupBySelect = document.getElementById('group-by');
-        const cardsContainer = document.getElementById('cards-container');
-        const emptyState = document.getElementById('empty-state');
-        const searchCard = document.getElementById('search-card');
-        const filterCountry = document.getElementById('filter-country');
-        const filterBrand = document.getElementById('filter-brand');
-        const filterFunding = document.getElementById('filter-funding');
-        const filterSegment = document.getElementById('filter-segment');
-        const sortBy = document.getElementById('sort-by');
-        const displayedCount = document.getElementById('displayed-count');
-        const totalCount = document.getElementById('total-count');
-        const toast = document.getElementById('toast');
-        const toastMessage = document.getElementById('toast-message');
-        const btnCopyAllVisible = document.getElementById('btn-copy-all-visible');
-
-        // Banner statistics elements
-        const filterSummaryBanner = document.getElementById('filter-summary-banner');
-        const statValid = document.getElementById('stat-valid');
-        const statExpired = document.getElementById('stat-expired');
-        const statDuplicate = document.getElementById('stat-duplicate');
-
-        // Initializer
         window.addEventListener('DOMContentLoaded', () => {
-            rawInput.value = DEFAULT_DATA;
-            setupFileUpload();
-            processAndRenderData();
+            document.getElementById('raw-input').value = defaultRawData;
+            processData(defaultRawData);
+
+            document.getElementById('process-btn').addEventListener('click', () => {
+                const text = document.getElementById('raw-input').value;
+                processData(text);
+            });
+
+            document.getElementById('file-input').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                document.getElementById('file-name').innerText = `Đã chọn: ${file.name}`;
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const text = event.target.result;
+                    document.getElementById('raw-input').value = text;
+                    processData(text);
+                };
+                reader.readAsText(file);
+            });
+
+            document.getElementById('search-input').addEventListener('input', renderCards);
+            document.getElementById('group-select').addEventListener('change', renderCards);
+            document.getElementById('expand-all-btn').addEventListener('click', () => toggleAllGroups(true));
+            document.getElementById('collapse-all-btn').addEventListener('click', () => toggleAllGroups(false));
         });
 
-        // Setup File Drag & Drop and Upload
-        function setupFileUpload() {
-            dropZone.addEventListener('click', () => fileInput.click());
-
-            fileInput.addEventListener('change', (e) => {
-                if (e.target.files.length > 0) {
-                    handleFile(e.target.files[0]);
-                }
-            });
-
-            dropZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropZone.classList.add('border-blue-500', 'bg-blue-500/10');
-            });
-
-            dropZone.addEventListener('dragleave', () => {
-                dropZone.classList.remove('border-blue-500', 'bg-blue-500/10');
-            });
-
-            dropZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('border-blue-500', 'bg-blue-500/10');
-                if (e.dataTransfer.files.length > 0) {
-                    handleFile(e.dataTransfer.files[0]);
-                }
-            });
-        }
-
-        function handleFile(file) {
-            if (!file.name.endsWith('.txt')) {
-                showToast("Vui lòng chọn file định dạng .txt!", true);
-                return;
-            }
-
-            fileNameDisplay.textContent = `📄 ${file.name}`;
-            fileNameDisplay.classList.remove('hidden');
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                rawInput.value = e.target.result;
-                processAndRenderData();
-                showToast(`Đã nạp dữ liệu thành công từ file: ${file.name}`);
-            };
-            reader.readAsText(file);
-        }
-
-        // Check Card Expiration Date (Format: MM/YY or MM/YYYY) against VN / Local Current Date
         function isCardExpired(expStr) {
             if (!expStr || !expStr.includes('/')) return false;
-
             const parts = expStr.split('/');
-            const expMonth = parseInt(parts[0], 10);
-            let expYear = parseInt(parts[1], 10);
-
-            if (isNaN(expMonth) || isNaN(expYear)) return false;
-
-            // Normalize 2-digit year to 4-digit year (e.g. 26 -> 2026)
-            if (expYear < 100) {
-                expYear += 2000;
-            }
+            let month = parseInt(parts[0], 10);
+            let year = parseInt(parts[1], 10);
+            if (isNaN(month) || isNaN(year)) return false;
+            if (year < 100) year += 2000;
 
             const now = new Date();
             const currentYear = now.getFullYear();
-            const currentMonth = now.getMonth() + 1; // 1-12
+            const currentMonth = now.getMonth() + 1;
 
-            if (expYear < currentYear) return true;
-            if (expYear === currentYear && expMonth < currentMonth) return true;
-
+            if (year < currentYear) return true;
+            if (year === currentYear && month < currentMonth) return true;
             return false;
         }
 
-        // Core Data Processing with Auto Expired & Duplicate Filters
-        function processAndRenderData() {
-            const rawText = rawInput.value.trim();
-            parsedCards = [];
-
+        function processData(rawText) {
+            const lines = rawText.split(/\r?\n/);
+            let parsedCards = [];
             let expiredCount = 0;
             let duplicateCount = 0;
-            const uniqueCardsSet = new Set();
+            const seenSet = new Set();
 
-            if (rawText) {
-                const lines = rawText.split('\n');
-                lines.forEach((line, index) => {
-                    const trimmedLine = line.trim();
-                    if (!trimmedLine) return;
+            lines.forEach(line => {
+                line = line.trim();
+                if (!line) return;
+                const cols = line.split('|');
+                if (cols.length < 2) return;
 
-                    const parts = trimmedLine.split('|').map(item => item.trim());
+                const card_number = cols[0].trim();
+                const expiration = cols[1].trim();
+                const cvc = (cols[2] || '').trim();
+                const name = (cols[3] || '').trim();
+                const country = (cols[4] || 'UN').toUpperCase().trim();
+                const brand = (cols[5] || 'UNKNOWN').toUpperCase().trim();
+                const funding = (cols[6] || 'UNKNOWN').toUpperCase().trim();
+                const segment_type = (cols[7] || 'CONSUMER').toUpperCase().trim();
 
-                    if (parts.length >= 3) {
-                        const cardNumber = parts[0] || '';
-                        const expiration = parts[1] || '';
-                        const cvc = parts[2] || '';
+                // 1. Kiểm tra hết hạn theo tháng/năm Việt Nam
+                if (isCardExpired(expiration)) {
+                    expiredCount++;
+                    return;
+                }
 
-                        // 1. Check expiration
-                        if (isCardExpired(expiration)) {
-                            expiredCount++;
-                            return; // Skip expired
-                        }
+                // 2. Kiểm tra trùng bộ 3: card_number|expiration|cvc
+                const uniqueKey = `${card_number}|${expiration}|${cvc}`;
+                if (seenSet.has(uniqueKey)) {
+                    duplicateCount++;
+                    return;
+                }
+                seenSet.add(uniqueKey);
 
-                        // 2. Check duplicates (card_number|expiration|cvc)
-                        const uniqueKey = `${cardNumber}|${expiration}|${cvc}`;
-                        if (uniqueCardsSet.has(uniqueKey)) {
-                            duplicateCount++;
-                            return; // Skip duplicate
-                        }
-
-                        uniqueCardsSet.add(uniqueKey);
-
-                        parsedCards.push({
-                            id: index,
-                            cardNumber: cardNumber,
-                            expiration: expiration,
-                            cvc: cvc,
-                            holderName: parts[3] || 'N/A',
-                            country: (parts[4] || 'UNKNOWN').toUpperCase(),
-                            brand: (parts[5] || 'OTHER').toUpperCase(),
-                            funding: (parts[6] || 'UNKNOWN').toUpperCase(),
-                            segmentType: (parts[7] || 'UNKNOWN').toUpperCase(),
-                            rawString: uniqueKey
-                        });
-                    }
+                parsedCards.push({
+                    card_number,
+                    expiration,
+                    cvc,
+                    name,
+                    country,
+                    brand,
+                    funding,
+                    segment_type,
+                    rawFormat: `${card_number}|${expiration}|${cvc}`
                 });
-            }
+            });
 
-            // Update Banner Statistics
-            filterSummaryBanner.classList.remove('hidden');
-            statValid.textContent = `Hợp lệ: ${parsedCards.length}`;
-            statExpired.textContent = `Đã loại hết hạn: ${expiredCount}`;
-            statDuplicate.textContent = `Đã loại trùng lặp: ${duplicateCount}`;
+            allCards = parsedCards;
 
-            populateFilterDropdowns();
-            applyFiltersAndSort();
+            // Cập nhật thống kê giao diện
+            document.getElementById('stat-valid').innerText = allCards.length;
+            document.getElementById('stat-expired').innerText = expiredCount;
+            document.getElementById('stat-duplicate').innerText = duplicateCount;
+            document.getElementById('total-count-badge').innerText = `Tổng số thẻ hợp lệ: ${allCards.length}`;
+
+            renderCards();
         }
 
-        // Event listener for Group-By Change
-        groupBySelect.addEventListener('change', renderCardsUI);
+        function renderCards() {
+            const searchTerm = document.getElementById('search-input').value.trim().toLowerCase();
+            const groupBy = document.getElementById('group-select').value;
 
-        // Render Accordion Grouped Cards UI
-        function renderCardsUI() {
-            cardsContainer.innerHTML = '';
-            totalCount.textContent = parsedCards.length;
-            displayedCount.textContent = visibleCards.length;
+            let filtered = allCards.filter(card => {
+                if (searchTerm && !card.card_number.toLowerCase().includes(searchTerm)) {
+                    return false;
+                }
+                return true;
+            });
 
-            if (visibleCards.length === 0) {
-                emptyState.classList.remove('hidden');
+            // Gom nhóm
+            const groups = {};
+            filtered.forEach(card => {
+                let key = card[groupBy] || 'OTHER';
+                if (!groups[key]) groups[key] = [];
+                groups[key].push(card);
+            });
+
+            // Sắp xếp các nhóm (Mặc định cố định theo Country hoặc key A-Z)
+            const sortedKeys = Object.keys(groups).sort();
+
+            const container = document.getElementById('groups-container');
+            container.innerHTML = '';
+
+            if (sortedKeys.length === 0) {
+                container.innerHTML = `<div class="text-center py-12 text-slate-500 bg-slate-800/40 rounded-2xl border border-slate-700">Không tìm thấy thẻ phù hợp.</div>`;
                 return;
-            } else {
-                emptyState.classList.add('hidden');
             }
 
-            const groupKey = groupBySelect.value; // country, funding, segmentType, brand
-            const groupedData = {};
+            sortedKeys.forEach((groupKey, index) => {
+                const cardsInGroup = groups[groupKey];
+                const groupCardId = `group-card-${index}`;
 
-            // Grouping logic
-            visibleCards.forEach(card => {
-                const key = card[groupKey] || 'KHÁC';
-                if (!groupedData[key]) groupedData[key] = [];
-                groupedData[key].push(card);
-            });
-
-            // Make cards-container full width for accordion groups
-            cardsContainer.className = 'space-y-4';
-
-            Object.keys(groupedData).sort().forEach(groupName => {
-                const groupCards = groupedData[groupName];
-
-                // Group Accordion Element
-                const accordion = document.createElement('details');
-                accordion.className = 'bg-gray-800 rounded-2xl border border-gray-700/80 overflow-hidden shadow-lg group/accordion';
-                accordion.open = true; // Open by default
-
-                // Flag icon if grouping by country
-                let titlePrefix = '';
-                if (groupKey === 'country' && groupName !== 'UNKNOWN') {
-                    const flagUrl = `https://flagcdn.com/w40/${groupName.toLowerCase()}.png`;
-                    titlePrefix = `<img src="${flagUrl}" class="w-6 h-4 inline-block object-cover rounded shadow-sm mr-2" onerror="this.style.display='none'">`;
-                }
-
-                const copyGroupText = groupCards.map(c => `${c.cardNumber}|${c.expiration}|${c.cvc}`).join('\\n');
-
-                accordion.innerHTML = `
-                    <summary class="bg-gray-700/50 hover:bg-gray-700 p-4 font-bold text-sm text-gray-200 cursor-pointer flex justify-between items-center select-none transition-colors border-b border-gray-700/60">
-                        <div class="flex items-center space-x-2">
-                            <i class="fa-solid fa-chevron-right text-xs text-gray-400 group-open/accordion:rotate-90 transition-transform"></i>
-                            <span class="flex items-center">${titlePrefix} Nhóm: <strong class="text-blue-400 ml-1.5 font-mono text-base">${groupName}</strong></span>
-                            <span class="text-xs bg-blue-600/20 text-blue-300 border border-blue-500/30 px-2.5 py-0.5 rounded-full font-semibold">${groupCards.length} thẻ</span>
-                        </div>
-                        <button onclick="event.stopPropagation(); copyGroupCards('${groupName}')" data-group="${groupName}" class="btn-copy-group text-xs bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/40 px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5">
-                            <i class="fa-regular fa-copy"></i> Copy ${groupCards.length} thẻ nhóm này
-                        </button>
-                    </summary>
-                    <div class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        ${groupCards.map(card => createCardHTML(card)).join('')}
-                    </div>
-                `;
-
-                // Attach dynamically built card raw copy strings
-                accordion.querySelectorAll('.btn-copy-group').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const copyString = groupCards.map(c => `${c.cardNumber}|${c.expiration}|${c.cvc}`).join('\n');
-                        copyToClipboard(copyString);
-                        showToast(`Đã copy ${groupCards.length} thẻ thuộc nhóm [${groupName}]!`);
-                    });
-                });
-
-                cardsContainer.appendChild(accordion);
-            });
-        }
-
-        // HTML Card Component Builder
-        function createCardHTML(card) {
-            const flagUrl = card.country && card.country !== 'UNKNOWN' 
-                ? `https://flagcdn.com/w40/${card.country.toLowerCase()}.png`
-                : 'https://placehold.co/40x30/374151/9CA3AF?text=?';
-
-            let brandBadgeClass = 'bg-gray-700 text-gray-300';
-            if (card.brand === 'VISA') brandBadgeClass = 'bg-blue-900/60 text-blue-300 border-blue-700/50';
-            else if (card.brand === 'MASTERCARD') brandBadgeClass = 'bg-orange-900/60 text-orange-300 border-orange-700/50';
-            else if (card.brand === 'AMERICAN_EXPRESS') brandBadgeClass = 'bg-emerald-900/60 text-emerald-300 border-emerald-700/50';
-
-            let fundingBadgeClass = 'bg-gray-700/60 text-gray-300';
-            if (card.funding === 'CREDIT') fundingBadgeClass = 'bg-purple-900/50 text-purple-300 border-purple-700/40';
-            else if (card.funding === 'DEBIT') fundingBadgeClass = 'bg-teal-900/50 text-teal-300 border-teal-700/40';
-            else if (card.funding === 'PREPAID') fundingBadgeClass = 'bg-amber-900/50 text-amber-300 border-amber-700/40';
-
-            return `
-                <div class="bg-gray-900/80 rounded-xl p-3.5 border border-gray-700 hover:border-gray-600 transition-all shadow-md flex flex-col justify-between space-y-2.5">
-                    <div class="flex items-center justify-between border-b border-gray-700/60 pb-2">
-                        <div class="flex items-center space-x-2">
-                            <img src="${flagUrl}" alt="${card.country}" class="w-5 h-3.5 object-cover rounded shadow-sm" onerror="this.src='https://placehold.co/40x30/374151/9CA3AF?text=${card.country}'">
-                            <span class="font-bold text-xs text-gray-200">${card.country}</span>
-                        </div>
-                        <div class="flex items-center space-x-1.5">
-                            <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded border ${brandBadgeClass}">${card.brand}</span>
-                            <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded border ${fundingBadgeClass}">${card.funding}</span>
-                        </div>
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <div>
-                            <span class="text-[9px] text-gray-400 font-medium uppercase tracking-wider block mb-0.5">Card Number</span>
-                            <button onclick="copySingleValue('${card.cardNumber}', 'Số thẻ')" 
-                                class="w-full text-left font-mono font-bold text-blue-400 bg-gray-800/90 hover:bg-blue-600/20 hover:text-blue-300 border border-gray-700/80 hover:border-blue-500/50 px-2.5 py-1 rounded-lg transition-all flex items-center justify-between group/btn" 
-                                title="Bấm để copy số thẻ">
-                                <span class="tracking-wider text-xs">${formatCardNumber(card.cardNumber)}</span>
-                                <i class="fa-regular fa-copy text-[10px] text-gray-500 group-hover/btn:text-blue-400"></i>
-                            </button>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-1.5">
-                            <div>
-                                <span class="text-[9px] text-gray-400 font-medium uppercase tracking-wider block mb-0.5">Exp Date</span>
-                                <button onclick="copySingleValue('${card.expiration}', 'Ngày hết hạn')" 
-                                    class="w-full text-left font-mono font-semibold text-emerald-400 bg-gray-800/90 hover:bg-emerald-600/20 hover:text-emerald-300 border border-gray-700/80 hover:border-emerald-500/50 px-2 py-1 rounded-lg transition-all flex items-center justify-between group/btn"
-                                    title="Bấm để copy ngày hết hạn">
-                                    <span class="text-xs">${card.expiration}</span>
-                                    <i class="fa-regular fa-copy text-[10px] text-gray-500 group-hover/btn:text-emerald-400"></i>
-                                </button>
-                            </div>
-                            <div>
-                                <span class="text-[9px] text-gray-400 font-medium uppercase tracking-wider block mb-0.5">CVC / CVV</span>
-                                <button onclick="copySingleValue('${card.cvc}', 'Mã CVC')" 
-                                    class="w-full text-left font-mono font-semibold text-amber-400 bg-gray-800/90 hover:bg-amber-600/20 hover:text-amber-300 border border-gray-700/80 hover:border-amber-500/50 px-2 py-1 rounded-lg transition-all flex items-center justify-between group/btn"
-                                    title="Bấm để copy CVC">
-                                    <span class="text-xs">${card.cvc}</span>
-                                    <i class="fa-regular fa-copy text-[10px] text-gray-500 group-hover/btn:text-amber-400"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center justify-between text-[10px] text-gray-400 pt-0.5">
-                            <span class="truncate max-w-[130px]" title="${card.holderName}"><i class="fa-regular fa-user text-gray-500"></i> ${card.holderName || 'N/A'}</span>
-                            <span class="text-gray-400 font-medium bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700/50 text-[9px]">${card.segmentType}</span>
-                        </div>
-                    </div>
-
-                    <div class="pt-1.5 border-t border-gray-700/50">
-                        <button onclick="copyPipeFormat('${card.rawString}')" 
-                            class="w-full py-1 bg-gray-800 hover:bg-blue-600 text-gray-300 hover:text-white font-medium text-[11px] rounded-lg border border-gray-700 hover:border-blue-500 transition-all flex items-center justify-center gap-1.5">
-                            <i class="fa-solid fa-copy"></i> Copy Pipe Format (num|exp|cvc)
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
-        });
-
-        // Event Listeners
-        btnRender.addEventListener('click', () => {
-            processData();
-            showToast("Đã xử lý & lọc thẻ thành công!");
-        });
-
-        btnLoadDefault.addEventListener('click', () => {
-            rawInput.value = DEFAULT_DATA;
-            processData();
-            showToast("Đã reset dữ liệu mẫu!");
-        });
-
-        btnClear.addEventListener('click', () => {
-            rawInput.value = '';
-            processData();
-        });
-
-        searchCard.addEventListener('input', renderGroupedUI);
-        groupBySelect.addEventListener('change', renderGroupedUI);
-        sortInGroupSelect.addEventListener('change', renderGroupedUI);
-
-        // Toggle Expand/Collapse All Accordions
-        btnToggleAll.addEventListener('click', () => {
-            isAllExpanded = !isAllExpanded;
-            const detailsElements = groupsContainer.querySelectorAll('details');
-            detailsElements.forEach(el => el.open = isAllExpanded);
-            
-            toggleAllText.textContent = isAllExpanded ? 'Thu gọn tất cả' : 'Mở rộng tất cả';
-            toggleAllIcon.className = isAllExpanded ? 'fa-solid fa-angles-up' : 'fa-solid fa-angles-down';
-        });
-
-        // Check Card Expiration against Current Vietnam Date (MM/YY)
-        function isCardExpired(expirationStr) {
-            if (!expirationStr || !expirationStr.includes('/')) return true;
-            const parts = expirationStr.split('/');
-            const expMonth = parseInt(parts[0], 10);
-            let expYear = parseInt(parts[1], 10);
-            
-            if (isNaN(expMonth) || isNaN(expYear)) return true;
-            
-            // Normalize YY to YYYY (26 -> 2026)
-            if (expYear < 100) expYear += 2000;
-
-            const now = new Date();
-            const currentYear = now.getFullYear();
-            const currentMonth = now.getMonth() + 1; // Month is 1-indexed
-
-            if (expYear < currentYear) return true;
-            if (expYear === currentYear && expMonth < currentMonth) return true;
-
-            return false;
-        }
-
-        // Main Processing Logic (Deduplication + Expiration Check)
-        function processData() {
-            const rawText = rawInput.value.trim();
-            validCards = [];
-            expiredCount = 0;
-            duplicateCount = 0;
-
-            const seenCards = new Set();
-
-            if (rawText) {
-                const lines = rawText.split('\n');
-                lines.forEach((line) => {
-                    const trimmedLine = line.trim();
-                    if (!trimmedLine) return;
-
-                    const parts = trimmedLine.split('|').map(item => item.trim());
-
-                    if (parts.length >= 3) {
-                        const cardNumber = parts[0] || '';
-                        const expiration = parts[1] || '';
-                        const cvc = parts[2] || '';
-                        const holderName = parts[3] || 'N/A';
-                        const country = (parts[4] || 'UNKNOWN').toUpperCase();
-                        const brand = (parts[5] || 'OTHER').toUpperCase();
-                        const funding = (parts[6] || 'UNKNOWN').toUpperCase();
-                        const segmentType = (parts[7] || 'UNKNOWN').toUpperCase();
-                        
-                        // 1. Deduplication Check (card_number|expiration|cvc)
-                        const cardUniqueKey = `${cardNumber}|${expiration}|${cvc}`;
-                        if (seenCards.has(cardUniqueKey)) {
-                            duplicateCount++;
-                            return; // Skip duplicate
-                        }
-
-                        // 2. Expiration Check
-                        if (isCardExpired(expiration)) {
-                            expiredCount++;
-                            return; // Skip expired card
-                        }
-
-                        // Valid Card
-                        seenCards.add(cardUniqueKey);
-                        validCards.push({
-                            cardNumber,
-                            expiration,
-                            cvc,
-                            holderName,
-                            country,
-                            brand,
-                            funding,
-                            segmentType,
-                            rawString: cardUniqueKey
-                        });
-                    }
-                });
-            }
-
-            // Update Summary Banner UI
-            updateSummaryBanner(linesLength = rawText ? rawText.split('\n').filter(l => l.trim()).length : 0);
-            renderGroupedUI();
-        }
-
-        // Update Summary Banner Info
-        function updateSummaryBanner(totalInputLines) {
-            validCountEl.textContent = validCards.length;
-
-            if (expiredCount > 0 || duplicateCount > 0) {
-                filterSummaryBanner.classList.remove('hidden');
-                summaryText.innerHTML = `Đã phân tích <strong>${totalInputLines}</strong> thẻ. Đã tự động lọc thành công <strong>${validCards.length}</strong> thẻ còn hạn.`;
-                badgeExpired.textContent = `${expiredCount} Hết hạn`;
-                badgeDuplicate.textContent = `${duplicateCount} Trùng lặp`;
-            } else {
-                if (validCards.length > 0) {
-                    filterSummaryBanner.classList.remove('hidden');
-                    summaryText.innerHTML = `Tất cả <strong>${validCards.length}</strong> thẻ nhập vào đều hợp lệ và chưa hết hạn!`;
-                    badgeExpired.textContent = `0 Hết hạn`;
-                    badgeDuplicate.textContent = `0 Trùng lặp`;
-                } else {
-                    filterSummaryBanner.classList.add('hidden');
-                }
-            }
-        }
-
-        // Render Cards Grouped into Accordions
-        function renderGroupedUI() {
-            groupsContainer.innerHTML = '';
-            const searchTerm = searchCard.value.trim().toLowerCase();
-            const groupByKey = groupBySelect.value;
-            const sortOrder = sortInGroupSelect.value;
-
-            // Filter cards by search input
-            let filteredCards = validCards.filter(c => c.cardNumber.toLowerCase().includes(searchTerm));
-            displayedCountEl.textContent = filteredCards.length;
-
-            if (filteredCards.length === 0) {
-                emptyState.classList.remove('hidden');
-                return;
-            } else {
-                emptyState.classList.add('hidden');
-            }
-
-            // Grouping Logic
-            const groupsMap = {};
-            filteredCards.forEach(card => {
-                const groupVal = card[groupByKey] || 'UNKNOWN';
-                if (!groupsMap[groupVal]) {
-                    groupsMap[groupVal] = [];
-                }
-                groupsMap[groupVal].push(card);
-            });
-
-            // Sort Group Names A-Z
-            const sortedGroupKeys = Object.keys(groupsMap).sort((a, b) => a.localeCompare(b));
-
-            sortedGroupKeys.forEach((groupKey, index) => {
-                let cardList = groupsMap[groupKey];
-
-                // Sort Cards inside Group
-                cardList.sort((a, b) => {
-                    if (sortOrder === 'card-asc') return a.cardNumber.localeCompare(b.cardNumber);
-                    if (sortOrder === 'exp-asc') return a.expiration.localeCompare(b.expiration);
-                    return 0;
-                });
-
-                // Generate Group Header Meta (e.g. Flag for Country group)
-                let groupIconOrFlag = '';
-                if (groupByKey === 'country') {
-                    const flagUrl = groupKey !== 'UNKNOWN' 
-                        ? `https://flagcdn.com/w40/${groupKey.toLowerCase()}.png`
-                        : 'https://placehold.co/40x30/374151/9CA3AF?text=?';
-                    groupIconOrFlag = `<img src="${flagUrl}" alt="${groupKey}" class="w-6 h-4 object-cover rounded shadow-sm inline-block mr-2" onerror="this.src='https://placehold.co/40x30/374151/9CA3AF?text=?';">`;
-                } else if (groupByKey === 'brand') {
-                    groupIconOrFlag = `<i class="fa-solid fa-credit-card text-blue-400 mr-2"></i>`;
-                } else if (groupByKey === 'funding') {
-                    groupIconOrFlag = `<i class="fa-solid fa-wallet text-emerald-400 mr-2"></i>`;
-                } else {
-                    groupIconOrFlag = `<i class="fa-solid fa-briefcase text-purple-400 mr-2"></i>`;
-                }
-
-                // Accordion Element construction
-                const details = document.createElement('details');
-                details.className = 'bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden shadow-lg group transition-all';
-                details.open = isAllExpanded;
-
-                const summary = document.createElement('summary');
-                summary.className = 'cursor-pointer p-4 bg-gray-800 hover:bg-gray-750 flex items-center justify-between font-bold text-sm select-none transition-colors border-b border-gray-700/50';
-
-                // Raw string list for copy group button
-                const groupRawPipeText = cardList.map(c => c.rawString).join('\n');
-
-                summary.innerHTML = `
-                    <div class="flex items-center space-x-2">
-                        <i class="fa-solid fa-chevron-right text-xs text-gray-500 transition-transform group-open:rotate-90"></i>
-                        <div class="flex items-center">
-                            ${groupIconOrFlag}
-                            <span class="text-base font-bold text-gray-100">${groupKey}</span>
-                        </div>
-                        <span class="bg-blue-900/60 text-blue-300 border border-blue-700/50 text-xs px-2.5 py-0.5 rounded-full font-mono">${cardList.length} thẻ</span>
-                    </div>
-                    <button onclick="event.preventDefault(); copyToClipboard('${escapeJsString(groupRawPipeText)}'); showToast('Đã copy ${cardList.length} thẻ nhóm ${groupKey}!');" 
-                        class="px-3 py-1 bg-gray-700 hover:bg-blue-600 text-gray-300 hover:text-white rounded-lg text-xs font-normal transition-all flex items-center gap-1.5 shadow-sm">
-                        <i class="fa-regular fa-copy"></i> Copy Nhóm
-                    </button>
-                `;
-
-                // Cards Grid Content inside Group Accordion
-                const cardsGrid = document.createElement('div');
-                cardsGrid.className = 'p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-gray-900/40';
-
-                cardList.forEach(card => {
-                    const cardCard = document.createElement('div');
-                    cardCard.className = 'bg-gray-800 rounded-xl p-4 border border-gray-700 hover:border-blue-500/50 transition-all shadow-md hover:shadow-xl flex flex-col justify-between space-y-3';
-
-                    // Brand Badge Class
-                    let brandBadge = 'bg-gray-700 text-gray-300';
-                    if (card.brand === 'VISA') brandBadge = 'bg-blue-900/60 text-blue-300 border-blue-700/50';
-                    else if (card.brand === 'MASTERCARD') brandBadge = 'bg-orange-900/60 text-orange-300 border-orange-700/50';
-                    else if (card.brand === 'AMERICAN_EXPRESS') brandBadge = 'bg-emerald-900/60 text-emerald-300 border-emerald-700/50';
-
-                    // Funding Badge Class
-                    let fundingBadge = 'bg-gray-700/60 text-gray-300';
-                    if (card.funding === 'CREDIT') fundingBadge = 'bg-purple-900/50 text-purple-300 border-purple-700/40';
-                    else if (card.funding === 'DEBIT') fundingBadge = 'bg-teal-900/50 text-teal-300 border-teal-700/40';
-                    else if (card.funding === 'PREPAID') fundingBadge = 'bg-amber-900/50 text-amber-300 border-amber-700/40';
-
-                    const cardFlag = `https://flagcdn.com/w40/${card.country.toLowerCase()}.png`;
-
-                    cardCard.innerHTML = `
-                        <!-- Card Top Metadata -->
-                        <div class="flex items-center justify-between border-b border-gray-700/60 pb-2">
-                            <div class="flex items-center space-x-2">
-                                <img src="${cardFlag}" alt="${card.country}" class="w-5 h-3.5 object-cover rounded" onerror="this.src='https://placehold.co/40x30/374151/9CA3AF?text=?';">
-                                <span class="font-bold text-xs text-gray-300">${card.country}</span>
-                            </div>
-                            <div class="flex items-center space-x-1">
-                                <span class="text-[10px] font-semibold px-2 py-0.5 rounded border ${brandBadge}">${card.brand}</span>
-                                <span class="text-[10px] font-semibold px-2 py-0.5 rounded border ${fundingBadge}">${card.funding}</span>
-                            </div>
-                        </div>
-
-                        <!-- Card Fields Interactive Buttons -->
-                        <div class="space-y-2">
-                            <!-- Card Number -->
-                            <div>
-                                <span class="text-[10px] text-gray-400 font-medium uppercase tracking-wider block mb-0.5">Card Number</span>
-                                <button onclick="copySingleValue('${card.cardNumber}', 'Số thẻ')" 
-                                    class="w-full text-left font-mono font-bold text-blue-400 bg-gray-900/80 hover:bg-blue-600/20 hover:text-blue-300 border border-gray-700 hover:border-blue-500/50 px-3 py-1.5 rounded-lg transition-all flex items-center justify-between group/btn" 
-                                    title="Click để copy số thẻ">
-                                    <span class="tracking-wider text-xs sm:text-sm">${formatCardNumber(card.cardNumber)}</span>
-                                    <i class="fa-regular fa-copy text-xs text-gray-500 group-hover/btn:text-blue-400"></i>
-                                </button>
-                            </div>
-
-                            <!-- Exp & CVC Row -->
-                            <div class="grid grid-cols-2 gap-2">
-                                <div>
-                                    <span class="text-[10px] text-gray-400 font-medium uppercase tracking-wider block mb-0.5">Exp Date</span>
-                                    <button onclick="copySingleValue('${card.expiration}', 'Ngày hết hạn')" 
-                                        class="w-full text-left font-mono font-semibold text-emerald-400 bg-gray-900/80 hover:bg-emerald-600/20 hover:text-emerald-300 border border-gray-700 hover:border-emerald-500/50 px-2.5 py-1.5 rounded-lg transition-all flex items-center justify-between group/btn"
-                                        title="Click để copy ngày hết hạn">
-                                        <span class="text-xs sm:text-sm">${card.expiration}</span>
-                                        <i class="fa-regular fa-copy text-xs text-gray-500 group-hover/btn:text-emerald-400"></i>
-                                    </button>
-                                </div>
-                                <div>
-                                    <span class="text-[10px] text-gray-400 font-medium uppercase tracking-wider block mb-0.5">CVC / CVV</span>
-                                    <button onclick="copySingleValue('${card.cvc}', 'Mã CVC')" 
-                                        class="w-full text-left font-mono font-semibold text-amber-400 bg-gray-900/80 hover:bg-amber-600/20 hover:text-amber-300 border border-gray-700 hover:border-amber-500/50 px-2.5 py-1.5 rounded-lg transition-all flex items-center justify-between group/btn"
-                                        title="Click để copy CVC">
-                                        <span class="text-xs sm:text-sm">${card.cvc}</span>
-                                        <i class="fa-regular fa-copy text-xs text-gray-500 group-hover/btn:text-amber-400"></i>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Holder Name & Segment -->
-                            <div class="flex items-center justify-between text-[11px] text-gray-400 pt-1">
-                                <span class="truncate max-w-[150px]" title="${card.holderName}"><i class="fa-regular fa-user text-gray-500"></i> ${card.holderName || 'N/A'}</span>
-                                <span class="text-gray-400 font-medium bg-gray-900/60 px-1.5 py-0.5 rounded border border-gray-700/50 text-[10px]">${card.segmentType}</span>
-                            </div>
-                        </div>
-
-                        <!-- Card Footer Pipe Copy -->
-                        <div class="pt-2 border-t border-gray-700/50">
-                            <button onclick="copyPipeFormat('${card.rawString}')" 
-                                class="w-full py-1.5 bg-gray-700/50 hover:bg-blue-600 text-gray-200 hover:text-white font-medium text-xs rounded-lg border border-gray-600 hover:border-blue-500 transition-all flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-copy"></i> Copy Pipe (num|exp|cvc)
-                            </button>
+                // Tạo tiêu đề hiển thị kèm cờ nếu là country
+                let groupTitleHTML = groupKey;
+                if (groupBy === 'country') {
+                    groupTitleHTML = `
+                        <div class="flex items-center gap-2">
+                            <img src="https://flagcdn.com/w40/${groupKey.toLowerCase()}.png" class="w-6 h-4 object-cover rounded shadow" onerror="this.style.display='none'">
+                            <span>Quốc gia: ${groupKey}</span>
                         </div>
                     `;
+                } else {
+                    groupTitleHTML = `<span>${groupBy.toUpperCase()}: ${groupKey}</span>`;
+                }
 
-                    cardsGrid.appendChild(cardCard);
+                // Gom toàn bộ chuỗi thẻ của nhóm này để copy nhanh
+                const groupRawBatch = cardsInGroup.map(c => c.rawFormat).join('\n');
+
+                const groupEl = document.createElement('div');
+                groupEl.className = 'bg-slate-800/70 border border-slate-700/80 rounded-2xl overflow-hidden shadow-lg';
+                groupEl.innerHTML = `
+                    <div class="flex flex-wrap items-center justify-between px-5 py-4 bg-slate-800/90 border-b border-slate-700/60 cursor-pointer select-none group-header" data-target="${groupCardId}">
+                        <div class="flex items-center gap-3">
+                            ${groupTitleHTML}
+                            <span class="px-2.5 py-0.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-xs rounded-full font-semibold">${cardsInGroup.length} thẻ</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="event.stopPropagation(); copyText('${encodeURIComponent(groupRawBatch)}', 'Đã copy toàn bộ ${cardsInGroup.length} thẻ của nhóm ${groupKey}!')" class="px-3 py-1 bg-indigo-600/80 hover:bg-indigo-600 text-white text-xs font-semibold rounded-lg transition">
+                                Copy cả nhóm
+                            </button>
+                            <span class="text-slate-400 transform transition-transform duration-200 arrow-icon font-bold">▼</span>
+                        </div>
+                    </div>
+                    <div id="${groupCardId}" class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        ${cardsInGroup.map(c => `
+                            <div class="bg-slate-900/70 border border-slate-700/60 hover:border-indigo-500/60 rounded-xl p-3 flex flex-col justify-between transition group/card relative">
+                                <div>
+                                    <div class="flex justify-between items-start mb-2">
+                                        <span class="font-mono text-sm font-bold text-indigo-300 tracking-wider cursor-pointer hover:text-white" onclick="copyText('${c.card_number}', 'Đã copy số thẻ!')" title="Click để copy số thẻ">${c.card_number}</span>
+                                        <span class="text-[10px] uppercase px-2 py-0.5 bg-slate-800 border border-slate-700 rounded text-slate-300">${c.brand}</span>
+                                    </div>
+                                    <div class="flex items-center gap-4 text-xs text-slate-400 font-mono mb-2">
+                                        <div>Exp: <span class="text-slate-200 cursor-pointer hover:text-indigo-400" onclick="copyText('${c.expiration}', 'Đã copy expiration!')" title="Click copy">${c.expiration}</span></div>
+                                        <div>CVC: <span class="text-slate-200 cursor-pointer hover:text-indigo-400" onclick="copyText('${c.cvc}', 'Đã copy CVC!')" title="Click copy">${c.cvc}</span></div>
+                                    </div>
+                                </div>
+                                <div class="pt-2 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+                                    <span class="truncate max-w-[120px]" title="${c.name}">${c.name || 'N/A'}</span>
+                                    <div class="flex items-center gap-1.5 font-semibold">
+                                        <span class="text-cyan-400">${c.funding}</span> • <span class="text-amber-400">${c.segment_type}</span>
+                                    </div>
+                                </div>
+                                <button onclick="copyText('${c.rawFormat}', 'Đã copy định dạng card|exp|cvc!')" class="absolute top-2 right-2 opacity-0 group-hover/card:opacity-100 transition px-2 py-1 bg-indigo-600 text-white text-[10px] rounded shadow">
+                                    Copy chuỗi
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+
+                // Sự kiện click để đóng mở Accordion
+                const header = groupEl.querySelector('.group-header');
+                const content = groupEl.querySelector(`#${groupCardId}`);
+                const arrow = groupEl.querySelector('.arrow-icon');
+                header.addEventListener('click', () => {
+                    content.classList.toggle('hidden');
+                    arrow.style.transform = content.classList.contains('hidden') ? 'rotate(-90deg)' : 'rotate(0deg)';
                 });
 
-                details.appendChild(summary);
-                details.appendChild(cardsGrid);
-                groupsContainer.appendChild(details);
+                container.appendChild(groupEl);
             });
         }
 
-        // Format 16 digits card number into 4-digit groups
-        function formatCardNumber(num) {
-            if (!num) return '';
-            return num.replace(/\s?/g, '').replace(/(\d{4})/g, '$1 ').trim();
-        }
-
-        // Copy Single Item Handler
-        function copySingleValue(val, label) {
-            if (!val) return;
-            copyToClipboard(val);
-            showToast(`Đã copy ${label}: ${val}`);
-        }
-
-        // Copy Pipe Format Handler
-        function copyPipeFormat(rawStr) {
-            if (!rawStr) return;
-            copyToClipboard(rawStr);
-            showToast(`Đã copy Pipe: ${rawStr}`);
-        }
-
-        // Copy All Currently Displayed Cards
-        btnCopyAllVisible.addEventListener('click', () => {
-            const searchTerm = searchCard.value.trim().toLowerCase();
-            let filteredCards = validCards.filter(c => c.cardNumber.toLowerCase().includes(searchTerm));
-            
-            if (filteredCards.length === 0) {
-                showToast("Không có thẻ nào để copy!", true);
-                return;
-            }
-            const copyText = filteredCards.map(c => c.rawString).join('\n');
-            copyToClipboard(copyText);
-            showToast(`Đã copy ${filteredCards.length} thẻ đang hiển thị!`);
-        });
-
-        // Escape helper for JS string inside inline HTML onclick
-        function escapeJsString(str) {
-            return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n');
-        }
-
-        // Copy Utility with ExecCommand Fallback
-        function copyToClipboard(text) {
-            const hiddenArea = document.getElementById('hidden-copy-area');
-            hiddenArea.value = text;
-            hiddenArea.select();
-            hiddenArea.setSelectionRange(0, 99999);
-
-            try {
-                document.execCommand('copy');
-            } catch (err) {
-                if (navigator.clipboard) {
-                    navigator.clipboard.writeText(text);
+        function toggleAllGroups(open) {
+            document.querySelectorAll('#groups-container > div').forEach(groupEl => {
+                const content = groupEl.querySelector('[id^="group-card-"]');
+                const arrow = groupEl.querySelector('.arrow-icon');
+                if (open) {
+                    content.classList.remove('hidden');
+                    arrow.style.transform = 'rotate(0deg)';
+                } else {
+                    content.classList.add('hidden');
+                    arrow.style.transform = 'rotate(-90deg)';
                 }
-            }
+            });
         }
 
-        // Toast Notification Display
-        let toastTimeout;
-        function showToast(msg, isError = false) {
-            toastMessage.textContent = msg;
-            if (isError) {
-                toast.classList.remove('bg-emerald-600');
-                toast.classList.add('bg-rose-600');
-            } else {
-                toast.classList.remove('bg-rose-600');
-                toast.classList.add('bg-emerald-600');
-            }
+        function copyText(text, message) {
+            const decoded = decodeURIComponent(text);
+            navigator.clipboard.writeText(decoded).then(() => {
+                showToast(message);
+            }).catch(err => {
+                console.error('Không thể copy: ', err);
+            });
+        }
 
-            toast.classList.remove('translate-y-20', 'opacity-0');
-            toast.classList.add('translate-y-0', 'opacity-100');
-
-            clearTimeout(toastTimeout);
-            toastTimeout = setTimeout(() => {
-                toast.classList.remove('translate-y-0', 'opacity-100');
-                toast.classList.add('translate-y-20', 'opacity-0');
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            toast.classList.remove('translate-y-24', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-24', 'opacity-0');
             }, 2500);
         }
     </script>
