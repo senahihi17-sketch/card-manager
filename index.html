@@ -303,15 +303,16 @@
                     </div>
                     <div id="${groupCardId}" class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         ${cardsInGroup.map(c => `
-                            <div class="bg-slate-900/70 border border-slate-700/60 hover:border-indigo-500/60 rounded-xl p-3 flex flex-col justify-between transition group/card relative">
+                            <div class="card-item bg-slate-900/70 border border-slate-700/60 hover:border-indigo-500/60 rounded-xl p-3 flex flex-col justify-between transition group/card relative">
+                                <span class="copied-badge hidden absolute -top-2 -right-2 bg-emerald-500 text-slate-950 font-bold text-[10px] px-2 py-0.5 rounded-full shadow-md">✓ Đã copy</span>
                                 <div>
                                     <div class="flex justify-between items-start mb-2">
-                                        <span class="font-mono text-sm font-bold text-indigo-300 tracking-wider cursor-pointer hover:text-white" onclick="copyText('${c.card_number}', 'Đã copy số thẻ!')" title="Click để copy số thẻ">${c.card_number}</span>
+                                        <span class="font-mono text-sm font-bold text-indigo-300 tracking-wider cursor-pointer hover:text-white" onclick="copyText('${c.card_number}', 'Đã copy số thẻ!', this)" title="Click để copy số thẻ">${c.card_number}</span>
                                         <span class="text-[10px] uppercase px-2 py-0.5 bg-slate-800 border border-slate-700 rounded text-slate-300">${c.brand}</span>
                                     </div>
                                     <div class="flex items-center gap-4 text-xs text-slate-400 font-mono mb-2">
-                                        <div>Exp: <span class="text-slate-200 cursor-pointer hover:text-indigo-400" onclick="copyText('${c.expiration}', 'Đã copy expiration!')" title="Click copy">${c.expiration}</span></div>
-                                        <div>CVC: <span class="text-slate-200 cursor-pointer hover:text-indigo-400" onclick="copyText('${c.cvc}', 'Đã copy CVC!')" title="Click copy">${c.cvc}</span></div>
+                                        <div>Exp: <span class="text-slate-200 cursor-pointer hover:text-indigo-400" onclick="copyText('${c.expiration}', 'Đã copy expiration!', this)" title="Click copy">${c.expiration}</span></div>
+                                        <div>CVC: <span class="text-slate-200 cursor-pointer hover:text-indigo-400" onclick="copyText('${c.cvc}', 'Đã copy CVC!', this)" title="Click copy">${c.cvc}</span></div>
                                     </div>
                                 </div>
                                 <div class="pt-2 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
@@ -320,7 +321,7 @@
                                         <span class="text-cyan-400">${c.funding}</span> • <span class="text-amber-400">${c.segment_type}</span>
                                     </div>
                                 </div>
-                                <button onclick="copyText('${c.rawFormat}', 'Đã copy định dạng card|exp|cvc!')" class="absolute top-2 right-2 opacity-0 group-hover/card:opacity-100 transition px-2 py-1 bg-indigo-600 text-white text-[10px] rounded shadow">
+                                <button onclick="copyText('${c.rawFormat}', 'Đã copy định dạng card|exp|cvc!', this)" class="absolute top-2 right-2 opacity-0 group-hover/card:opacity-100 transition px-2 py-1 bg-indigo-600 text-white text-[10px] rounded shadow">
                                     Copy chuỗi
                                 </button>
                             </div>
@@ -355,10 +356,29 @@
             });
         }
 
-        function copyText(text, message) {
+        function copyText(text, message, element = null) {
             const decoded = decodeURIComponent(text);
             navigator.clipboard.writeText(decoded).then(() => {
                 showToast(message);
+                if (element) {
+                    const cardItem = element.closest('.card-item');
+                    if (cardItem) {
+                        // Áp dụng viền sáng đậm và background nổi bật cho thẻ đã copy
+                        cardItem.classList.remove('border-slate-700/60', 'bg-slate-900/70');
+                        cardItem.classList.add(
+                            'border-indigo-500', 
+                            'border-2', 
+                            'bg-slate-800/90', 
+                            'shadow-[0_0_15px_rgba(99,102,241,0.25)]'
+                        );
+                        
+                        // Hiển thị nhãn "✓ Đã copy"
+                        const badge = cardItem.querySelector('.copied-badge');
+                        if (badge) {
+                            badge.classList.remove('hidden');
+                        }
+                    }
+                }
             }).catch(err => {
                 console.error('Không thể copy: ', err);
             });
